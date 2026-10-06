@@ -36,15 +36,15 @@ export function Home() {
   return (
     <div className="home">
       <section className="hero">
-        <HeroCore />
+        <HeroFloaters />
         <motion.div className="hero-copy" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
           <div className="kicker">
-            <span className="pulse-dot" /> Personal learning game
+            <span className="kicker-dot" /> The learning game
           </div>
           <h1 className="hero-title">
-            Grow a <span className="grad-text">universe</span>
+            Grow your own
             <br />
-            of knowledge.
+            <span className="marker">knowledge tree</span>
           </h1>
           <p className="hero-sub">Ask a question. Watch it branch into concepts. Explore each one, ask your own questions, and build a knowledge tree that's truly yours.</p>
 
@@ -55,11 +55,10 @@ export function Home() {
               submit(q);
             }}
           >
-            <div className="ask-border" />
-            <Sparkles className="ask-icon" size={20} />
+            <Sparkles className="ask-icon" size={22} />
             <input className="ask-input" placeholder="What do you want to understand?" value={q} onChange={(e) => setQ(e.target.value)} disabled={!!planting} />
             <motion.button className="btn btn-primary ask-btn" type="submit" disabled={!q.trim() || !!planting} whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              Grow tree <ArrowRight size={16} />
+              Play <ArrowRight size={18} strokeWidth={3} />
             </motion.button>
           </form>
 
@@ -77,6 +76,16 @@ export function Home() {
                 {s === DEMO_QUESTION && demo && <span className="feat-tag">DEMO</span>}
                 {s}
               </motion.button>
+            ))}
+          </div>
+          <div className="how">
+            {HOW.map((h, i) => (
+              <motion.div key={h.n} className="how-step" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 + i * 0.08 }}>
+                <span className="how-n">{h.n}</span>
+                <span className="how-icon">{h.icon}</span>
+                <span className="how-t">{h.t}</span>
+                <span className="how-d">{h.d}</span>
+              </motion.div>
             ))}
           </div>
         </motion.div>
@@ -101,34 +110,41 @@ export function Home() {
   );
 }
 
-function HeroCore() {
-  const sats = useMemo(
-    () => [
-      { r: 150, d: 22, s: 12, c: "#22d3ee", o: 0 },
-      { r: 150, d: 22, s: 8, c: "#a78bfa", o: 0.5 },
-      { r: 210, d: 34, s: 10, c: "#f472b6", o: 0.2 },
-      { r: 210, d: 34, s: 7, c: "#34d399", o: 0.7 },
-      { r: 270, d: 48, s: 9, c: "#fbbf24", o: 0.35 },
-    ],
-    [],
-  );
+const FLOATERS = [
+  { e: "🧠", x: 6, y: 12, c: "#8b5cf6", r: -8 },
+  { e: "⚙️", x: 88, y: 10, c: "#06b6d4", r: 6 },
+  { e: "🚀", x: 1, y: 44, c: "#ff4d94", r: 10 },
+  { e: "💡", x: 93, y: 42, c: "#f59e0b", r: -6 },
+  { e: "🧬", x: 5, y: 74, c: "#10b981", r: 4 },
+  { e: "🔬", x: 90, y: 72, c: "#3b82f6", r: -10 },
+];
+
+function HeroFloaters() {
   return (
-    <div className="hero-core" aria-hidden>
-      <div className="core-glow" />
-      {[150, 210, 270].map((r, i) => (
-        <span key={r} className={`core-ring ring-${i}`} style={{ width: r * 2, height: r * 2 }} />
+    <div className="floaters" aria-hidden>
+      {FLOATERS.map((f, i) => (
+        <motion.div
+          key={i}
+          className="floater"
+          style={{ left: `${f.x}%`, top: `${f.y}%`, ["--c" as string]: f.c, rotate: f.r }}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1, y: [0, -14, 0] }}
+          transition={{ opacity: { delay: 0.2 + i * 0.1 }, scale: { type: "spring", delay: 0.2 + i * 0.1 }, y: { duration: 3.5 + i * 0.4, repeat: Infinity, ease: "easeInOut" } }}
+        >
+          <span className="tile-cap" />
+          <span>{f.e}</span>
+        </motion.div>
       ))}
-      {sats.map((s, i) => (
-        <span key={i} className="sat-orbit" style={{ width: s.r * 2, height: s.r * 2, animationDuration: `${s.d}s`, animationDelay: `${-s.o * s.d}s` }}>
-          <i style={{ width: s.s, height: s.s, background: s.c, boxShadow: `0 0 18px 4px ${s.c}` }} />
-        </span>
-      ))}
-      <div className="core-orb">
-        <span>🌌</span>
-      </div>
     </div>
   );
 }
+
+const HOW = [
+  { n: 1, icon: "❓", t: "Ask", d: "Any question you're curious about" },
+  { n: 2, icon: "🌳", t: "Grow", d: "AI splits it into concept tiles" },
+  { n: 3, icon: "🔬", t: "Deep Dive", d: "Go under the hood, layer by layer" },
+  { n: 4, icon: "👑", t: "Master", d: "Earn stars, XP and badges" },
+];
 
 function Planting({ question }: { question: string }) {
   return (
@@ -180,7 +196,7 @@ function TreeCard({ tree, index }: { tree: Tree; index: number }) {
 
   return (
     <motion.div
-      className="tree-card glass"
+      className="tree-card"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
@@ -195,12 +211,12 @@ function TreeCard({ tree, index }: { tree: Tree; index: number }) {
           const n = tree.nodes[id];
           if (!n.parentId || !preview.pos[n.parentId]) return null;
           const q = preview.pos[n.parentId];
-          return <line key={`l${id}`} x1={q.x * preview.s + preview.ox} y1={q.y * preview.s + preview.oy} x2={p.x * preview.s + preview.ox} y2={p.y * preview.s + preview.oy} stroke="rgba(150,170,255,0.25)" />;
+          return <line key={`l${id}`} x1={q.x * preview.s + preview.ox} y1={q.y * preview.s + preview.oy} x2={p.x * preview.s + preview.ox} y2={p.y * preview.s + preview.oy} stroke="rgba(28,25,64,0.25)" strokeWidth={1.5} />;
         })}
         {Object.entries(preview.pos).map(([id, p]) => {
           const n = tree.nodes[id];
-          const c = n.kind === "question" ? "#818cf8" : stateColor(n.state);
-          return <circle key={id} cx={p.x * preview.s + preview.ox} cy={p.y * preview.s + preview.oy} r={n.kind === "root" ? 5 : 3} fill={c} style={{ filter: `drop-shadow(0 0 4px ${c})` }} />;
+          const c = n.kind === "question" ? "#7c5cff" : stateColor(n.state);
+          return <circle key={id} cx={p.x * preview.s + preview.ox} cy={p.y * preview.s + preview.oy} r={n.kind === "root" ? 6 : 4} fill={c} stroke="#1c1940" strokeWidth={1.5} />;
         })}
       </svg>
       <div className="tree-card-body">
@@ -241,13 +257,13 @@ function Ring({ ratio }: { ratio: number }) {
   const c = 2 * Math.PI * r;
   return (
     <svg width="28" height="28" className="ring">
-      <circle cx="14" cy="14" r={r} stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" />
+      <circle cx="14" cy="14" r={r} stroke="rgba(28,25,64,0.12)" strokeWidth="3.5" fill="none" />
       <motion.circle
         cx="14"
         cy="14"
         r={r}
         stroke="url(#ringGrad)"
-        strokeWidth="3"
+        strokeWidth="3.5"
         fill="none"
         strokeLinecap="round"
         strokeDasharray={c}
@@ -258,11 +274,11 @@ function Ring({ ratio }: { ratio: number }) {
       />
       <defs>
         <linearGradient id="ringGrad">
-          <stop offset="0" stopColor="#22d3ee" />
-          <stop offset="1" stopColor="#34d399" />
+          <stop offset="0" stopColor="#06b6d4" />
+          <stop offset="1" stopColor="#10b981" />
         </linearGradient>
       </defs>
-      <text x="14" y="17.5" textAnchor="middle" fontSize="8" fill="#9aa4c7">
+      <text x="14" y="17.5" textAnchor="middle" fontSize="8" fontWeight="700" fill="#4a4770">
         {Math.round(ratio * 100)}
       </text>
     </svg>

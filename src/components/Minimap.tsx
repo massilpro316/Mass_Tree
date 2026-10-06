@@ -50,7 +50,7 @@ export function Minimap({
           const n = tree.nodes[id];
           if (!n.parentId || !pos[n.parentId]) return null;
           const q = pos[n.parentId];
-          return <line key={`l-${id}`} x1={q.x * s + ox} y1={q.y * s + oy} x2={p.x * s + ox} y2={p.y * s + oy} stroke="rgba(150,170,255,0.25)" strokeWidth={1} />;
+          return <line key={`l-${id}`} x1={q.x * s + ox} y1={q.y * s + oy} x2={p.x * s + ox} y2={p.y * s + oy} stroke="rgba(28,25,64,0.18)" strokeWidth={1} />;
         })}
         {Object.entries(pos).map(([id, p]) => {
           const n = tree.nodes[id];
@@ -60,7 +60,7 @@ export function Minimap({
               cx={p.x * s + ox}
               cy={p.y * s + oy}
               r={n.kind === "root" ? 4 : 2.4}
-              fill={n.kind === "question" ? "#818cf8" : stateColor(n.state)}
+              fill={n.kind === "question" ? "#7c5cff" : stateColor(n.state)}
             />
           );
         })}

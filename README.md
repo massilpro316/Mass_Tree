@@ -11,16 +11,18 @@ AI generates the structure. You own the knowledge.
 1. **Ask a root question**, for example *"How does Laravel Queue work?"*. The engine plants a tree with four core concepts.
 2. **Open a concept card.** Each node is a learning object with a summary, an explanation, a difficulty and its place in the tree.
 3. **Press `+` to explore.** Pick an angle (*What is it? · How does it work? · Under the hood · How is it implemented? · What does it depend on?*) or **ask your own question**. Every answer becomes a new branch with its own sub-concepts.
-4. **Make it yours.** Edit any node, add your own concepts, write notes, collapse or delete branches.
-5. **Level up.** Move each concept from Unknown → Discovered → Exploring → Learning → Understood → **Mastered**. Mastery takes a challenge: an AI-generated quiz, or a "teach it back" explanation in demo mode.
+4. **Press 🔬 to Deep Dive.** Go under the hood of any concept in three depth levels: **100m Mechanics** (the step-by-step internal flow), **500m Internals** (data structures, algorithms, source-level behaviour) and **1000m Bedrock** (runtime, OS and protocol level, performance, failure modes). Each layer has a step-by-step timeline, a code example, pitfalls and key terms you can add to your tree. You can also point a dive at a specific focus.
+5. **Make it yours.** Edit any node, add your own concepts, write notes, collapse or delete branches.
+6. **Level up.** Move each concept from Unknown → Discovered → Exploring → Learning → Understood → **Mastered**. Mastery takes a challenge: an AI-generated quiz, or a "teach it back" explanation in demo mode.
 
 ## Game layer
 
-- XP for discovering, exploring, asking your own questions, understanding and mastering
-- Levels with ranks (Spark → Seeker → Pathfinder → … → Singularity) and a full-screen level-up animation
-- 17 achievements across bronze, silver, gold and mythic tiers
-- Node states with distinct visuals: dim, normal, glowing, animated, completed, and a gold crown for mastered
-- Animated starfield with parallax, flowing connections with travelling particles, particle bursts when branches sprout, a 3D-tilting concept card, synthesized sound effects (with mute)
+- Light "grid gradient" world: drifting pastel gradients under a soft grid, chunky outlined game cards and 3D press buttons
+- Concepts are game tiles with 0–3 stars (Learning ★, Understood ★★, Mastered ★★★ with a gold tile and crown)
+- XP for discovering, exploring, asking your own questions, deep diving, understanding and mastering
+- Levels with ranks (Spark → Rookie → Seeker → … → Singularity), a daily 🔥 streak and a level-up celebration
+- 21 achievements across bronze, silver, gold and mythic tiers
+- Animated connections with travelling particles, confetti bursts when branches sprout, a tilting concept card, synthesized sound effects (with mute)
 - Zoom, pan and pinch, smooth camera focus, minimap, and keyboard navigation (`↑ ↓ ← →` walk the tree, `F` fit, `+`/`-` zoom, `Esc` close)
 
 ## Running it

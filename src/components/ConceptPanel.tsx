@@ -7,6 +7,7 @@ import {
   EyeOff,
   GitBranchPlus,
   Lightbulb,
+  Microscope,
   Pencil,
   Plus,
   Save,
@@ -18,7 +19,8 @@ import { useEffect, useRef, useState } from "react";
 import { pathTo } from "../lib/layout";
 import { Markdown } from "../lib/markdown";
 import { sfx } from "../lib/sound";
-import { stateColor, useStore, useTree } from "../store/useStore";
+import { diveKey, stateColor, useStore, useTree } from "../store/useStore";
+import { nodeColor } from "./NodeView";
 import { DIFFICULTIES, NODE_STATES, type Difficulty, type KNode, type NodeState } from "../types";
 
 const STATE_LABEL: Record<NodeState, string> = {
@@ -62,6 +64,8 @@ function PanelCard({ node }: { node: KNode }) {
   const select = useStore((s) => s.select);
   const openExplore = useStore((s) => s.openExplore);
   const openMastery = useStore((s) => s.openMastery);
+  const openDive = useStore((s) => s.openDive);
+  const diving = useStore((s) => !!s.generating[diveKey(node.id)]);
   const setNodeState = useStore((s) => s.setNodeState);
   const updateNode = useStore((s) => s.updateNode);
   const setNotes = useStore((s) => s.setNotes);
@@ -96,7 +100,8 @@ function PanelCard({ node }: { node: KNode }) {
   const rx = useSpring(useTransform(my, [-0.5, 0.5], [3, -3]), { stiffness: 150, damping: 20 });
   const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-4, 4]), { stiffness: 150, damping: 20 });
 
-  const color = node.kind === "question" ? (node.angle === "custom" ? "#f472b6" : "#818cf8") : stateColor(node.state);
+  const color = nodeColor(node);
+  const diveDepth = (node.dives ?? []).reduce((m, d) => Math.max(m, d.level), 0);
   const path = pathTo(tree, node.id);
   const level = NODE_STATES.indexOf(node.state);
 
@@ -223,6 +228,15 @@ function PanelCard({ node }: { node: KNode }) {
               {generating ? <span className="spinner" /> : <Plus size={16} strokeWidth={3} />}
               {generating ? "Exploring…" : "Explore"}
             </motion.button>
+            <motion.button className="btn btn-dive dive-btn" onClick={() => openDive(node.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+              {diving ? <span className="spinner" /> : <Microscope size={16} strokeWidth={2.6} />}
+              Deep Dive
+              <span className="dive-meter">
+                {[1, 2, 3].map((i) => (
+                  <i key={i} className={i <= diveDepth ? "on" : ""} />
+                ))}
+              </span>
+            </motion.button>
             {level < NODE_STATES.indexOf("learning") && (
               <button className="btn btn-ghost" onClick={() => setNodeState(node.id, "learning")}>
                 <Sparkles size={15} /> Start learning
@@ -259,7 +273,7 @@ function PanelCard({ node }: { node: KNode }) {
               {node.children.map((cid, i) => {
                 const c = tree.nodes[cid];
                 if (!c) return null;
-                const cc = c.kind === "question" ? (c.angle === "custom" ? "#f472b6" : "#818cf8") : stateColor(c.state);
+                const cc = nodeColor(c);
                 return (
                   <motion.button
                     key={cid}

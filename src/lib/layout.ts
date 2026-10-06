@@ -6,8 +6,8 @@ export interface Positioned {
   depth: number;
 }
 
-export const NODE_SLOT = 200; // horizontal room per leaf
-export const LEVEL_GAP = 210; // vertical distance between depths
+export const NODE_SLOT = 190; // horizontal room per leaf
+export const LEVEL_GAP = 240; // vertical distance between depths
 
 /** Tidy top-down layout: each subtree gets width proportional to its visible leaves. */
 export function layoutTree(tree: Tree): Record<string, Positioned> {

@@ -1,16 +1,15 @@
 import { motion } from "framer-motion";
 import { memo } from "react";
 import type { Positioned } from "../lib/layout";
-import { stateColor } from "../store/useStore";
 import type { KNode, Tree } from "../types";
 import { NODE_STATES } from "../types";
-import { nodeRadius } from "./NodeView";
+import { nodeBottom, nodeColor, nodeTop } from "./NodeView";
 
 const MOVE = { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const };
 
-function edgePath(p: Positioned, c: Positioned, pr: number, cr: number) {
-  const y1 = p.y + pr;
-  const y2 = c.y - cr;
+function edgePath(p: Positioned, c: Positioned, fromBottom: number, toTop: number) {
+  const y1 = p.y + fromBottom;
+  const y2 = c.y - toTop;
   const mid = (y1 + y2) / 2;
   return `M ${p.x} ${y1} C ${p.x} ${mid}, ${c.x} ${mid}, ${c.x} ${y2}`;
 }
@@ -30,7 +29,7 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
     const parent = tree.nodes[child.parentId];
     edges.push({
       id,
-      d: edgePath(pos[child.parentId], pos[id], nodeRadius(parent), nodeRadius(child)),
+      d: edgePath(pos[child.parentId], pos[id], nodeBottom(parent), nodeTop(child)),
       child,
       fresh: Date.now() - child.createdAt < 4000,
       hot: highlight.has(id),
@@ -40,7 +39,7 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
   return (
     <svg className="edges" width="1" height="1" overflow="visible">
       {edges.map(({ id, d, child, fresh, hot }) => {
-        const color = child.kind === "question" ? (child.angle === "custom" ? "#f472b6" : "#818cf8") : stateColor(child.state);
+        const color = nodeColor(child);
         const level = NODE_STATES.indexOf(child.state);
         const active = level >= 1 || child.kind === "question";
         return (
@@ -50,9 +49,9 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
               initial={fresh ? { pathLength: 0, opacity: 0 } : false}
               animate={{ d, pathLength: 1, opacity: 1 }}
               transition={{ d: MOVE, pathLength: { duration: 0.9, ease: "easeOut" }, opacity: { duration: 0.3 } }}
-              stroke={color}
-              strokeOpacity={hot ? 0.35 : 0.12}
-              strokeWidth={hot ? 12 : 8}
+              stroke={hot ? color : "#1c1940"}
+              strokeOpacity={hot ? 0.22 : 0.07}
+              strokeWidth={hot ? 16 : 12}
               fill="none"
               strokeLinecap="round"
             />
@@ -62,9 +61,10 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
               initial={fresh ? { pathLength: 0 } : false}
               animate={{ d, pathLength: 1 }}
               transition={{ d: MOVE, pathLength: { duration: 0.9, ease: "easeOut" } }}
-              stroke={color}
-              strokeOpacity={hot ? 1 : active ? 0.7 : 0.4}
-              strokeWidth={hot ? 2.4 : 1.6}
+              stroke={active ? color : "#b4b7d2"}
+              strokeOpacity={hot ? 1 : active ? 0.75 : 0.9}
+              strokeWidth={hot ? 3.5 : 2.5}
+              strokeDasharray={active ? undefined : "2 7"}
               fill="none"
               strokeLinecap="round"
             />
@@ -74,14 +74,14 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
                 d={d}
                 animate={{ d }}
                 transition={{ d: MOVE }}
-                stroke={color}
-                strokeWidth={hot ? 2.4 : 1.6}
+                stroke="#ffffff"
+                strokeWidth={hot ? 2 : 1.4}
                 fill="none"
                 strokeLinecap="round"
               />
             )}
             {(level >= 2 || hot || child.kind === "question") && (
-              <circle r={hot ? 3.4 : 2.6} fill={color} className="edge-particle">
+              <circle r={hot ? 5 : 4} fill="#fff" stroke={color} strokeWidth={2.5} className="edge-particle">
                 <animateMotion dur={`${2.4 + (id.charCodeAt(id.length - 1) % 5) * 0.4}s`} repeatCount="indefinite" rotate="auto">
                   <mpath href={`#edge-${id}`} />
                 </animateMotion>

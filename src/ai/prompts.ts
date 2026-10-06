@@ -1,4 +1,4 @@
-import type { ExploreAngle, ExploreContext } from "../types";
+import type { DiveContext, ExploreAngle, ExploreContext } from "../types";
 
 export const ANGLES: Record<ExploreAngle, { label: string; question: (t: string) => string; hint: string }> = {
   what: { label: "What is it?", question: (t) => `What is ${t}?`, hint: "Definition, purpose and key properties" },
@@ -54,4 +54,55 @@ Notes on the concept:
 ${details}
 
 Write a 3-question multiple-choice mastery challenge that checks real understanding of this concept (not trivia or wording). Each question has exactly 4 options, one correct answer ("answer" is its 0-based index), and a one-sentence "explanation". Vary the position of the correct answer.`;
+}
+
+export const DIVE_LEVELS = [
+  {
+    level: 1,
+    name: "Mechanics",
+    depth: "100m",
+    icon: "⚙️",
+    goal: "how it works internally, step by step: the sequence of things that actually happen, which components are involved and how data moves between them",
+  },
+  {
+    level: 2,
+    name: "Internals",
+    depth: "500m",
+    icon: "🧬",
+    goal: "the implementation: the data structures, algorithms, classes or functions involved, and what the framework, library or runtime actually does at source level",
+  },
+  {
+    level: 3,
+    name: "Bedrock",
+    depth: "1000m",
+    icon: "💎",
+    goal: "the lowest layer: interactions with the language runtime, operating system, network protocols or hardware; concurrency, performance characteristics, failure modes and tricky edge cases",
+  },
+] as const;
+
+export function divePrompt(ctx: DiveContext) {
+  const lvl = DIVE_LEVELS[ctx.level - 1];
+  const prev = ctx.previous.length
+    ? `The learner already went through these shallower layers — go deeper, do not repeat them:\n${ctx.previous.map((p) => `- Level ${p.level} "${p.title}": ${p.summary}`).join("\n")}`
+    : "";
+  const focus = ctx.focus ? `The learner wants this dive to focus on: "${ctx.focus}".` : "";
+  return `Learning path: ${ctx.path.join(" → ")}
+Concept: "${ctx.node.title}" — ${ctx.node.summary}
+What the learner has read so far:
+${ctx.node.details}
+
+${prev}
+${focus}
+
+Write DEEP DIVE level ${lvl.level} of 3 ("${lvl.name}", ${lvl.depth} below the surface). Explain ${lvl.goal}.
+Be concrete and technically precise: name real functions, structures, system calls, protocol messages or algorithms where they exist. If details vary by version or implementation, say so.
+
+Return:
+- "title": a short title for this layer (max 8 words).
+- "summary": 1-2 sentences capturing the key insight of this layer.
+- "steps": 4-7 ordered steps showing what happens under the hood. Each has a short "label" (max 6 words) and a "detail" (1-3 sentences).
+- "sections": 2-3 sections, each with a "heading" and a Markdown "body" (60-160 words). No headings inside bodies.
+- "code": an illustrative snippet ("language", "snippet" up to ~25 lines, one-sentence "caption"). Use empty strings for all three if code genuinely doesn't help.
+- "pitfalls": 2-4 gotchas, misconceptions or failure modes (one sentence each).
+- "terms": 3-5 key terms introduced at this depth, each with a one-sentence "meaning". These may become new concepts in the learner's tree.`;
 }

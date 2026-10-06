@@ -54,7 +54,7 @@ export function LevelUp() {
         x: (Math.random() - 0.5) * 900,
         y: (Math.random() - 0.7) * 700,
         r: Math.random() * 720 - 360,
-        c: ["#22d3ee", "#a78bfa", "#f472b6", "#fbbf24", "#34d399"][Math.floor(Math.random() * 5)],
+        c: ["#7c5cff", "#06b6d4", "#ff4d94", "#ffc23d", "#10b981"][Math.floor(Math.random() * 5)],
         d: Math.random() * 0.3,
       })),
     // regenerate per level-up

@@ -1,13 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react";
+import { Backdrop } from "./components/Backdrop";
 import { ConceptPanel } from "./components/ConceptPanel";
+import { DiveModal } from "./components/DiveModal";
 import { ExploreModal } from "./components/ExploreModal";
 import { LevelUp, Toasts } from "./components/Feedback";
 import { Home } from "./components/Home";
 import { HUD } from "./components/HUD";
 import { MasteryModal } from "./components/MasteryModal";
 import { AchievementsModal, SettingsModal } from "./components/Panels";
-import { Starfield } from "./components/Starfield";
 import { TreeCanvas } from "./components/TreeCanvas";
 import { useStore } from "./store/useStore";
 
@@ -21,7 +22,7 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       const s = useStore.getState();
-      if (s.exploreId || s.masteryId || s.modal) return;
+      if (s.exploreId || s.masteryId || s.diveId || s.modal) return;
       if (s.selectedId) s.select(null);
     };
     window.addEventListener("keydown", onKey);
@@ -30,7 +31,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Starfield />
+      <Backdrop grid={!(screen === "tree" && treeExists)} />
       <HUD />
       <AnimatePresence mode="wait">
         {screen === "tree" && treeExists ? (
@@ -46,6 +47,7 @@ export default function App() {
       </AnimatePresence>
       <ExploreModal />
       <MasteryModal />
+      <DiveModal />
       <SettingsModal />
       <AchievementsModal />
       <Toasts />

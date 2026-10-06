@@ -7,7 +7,7 @@ import { uid } from "../lib/id";
 import { depthOf, descendants, pathTo } from "../lib/layout";
 import { levelFromXp, XP } from "../lib/levels";
 import { sfx } from "../lib/sound";
-import type { ConceptDraft, ExploreAngle, KNode, NodeState, Profile, Tree } from "../types";
+import type { ConceptDraft, DeepDive, ExploreAngle, KNode, NodeState, Profile, Tree } from "../types";
 import { NODE_STATES } from "../types";
 
 export interface Toast {
@@ -32,6 +32,7 @@ interface UI {
   selectedId: string | null;
   exploreId: string | null;
   masteryId: string | null;
+  diveId: string | null;
   modal: Modal;
   planting: string | null;
   generating: Record<string, boolean>;
@@ -52,16 +53,18 @@ interface State extends UI {
   select(nodeId: string | null): void;
   openExplore(nodeId: string | null): void;
   openMastery(nodeId: string | null): void;
+  openDive(nodeId: string | null): void;
   setModal(m: Modal): void;
   focusNode(nodeId: string, zoom?: number): void;
 
   // game actions
   plantTree(question: string): Promise<void>;
   explore(nodeId: string, question: string, angle: ExploreAngle | "custom"): Promise<boolean>;
+  deepDive(nodeId: string, level: number, focus?: string): Promise<boolean>;
   setNodeState(nodeId: string, state: NodeState): void;
   updateNode(nodeId: string, patch: Partial<Pick<KNode, "title" | "summary" | "details" | "icon" | "difficulty">>): void;
   setNotes(nodeId: string, notes: string): void;
-  addChild(nodeId: string, title: string): void;
+  addChild(nodeId: string, title: string, summary?: string, select?: boolean): void;
   deleteNode(nodeId: string): void;
   toggleCollapse(nodeId: string): void;
   deleteTree(id: string): void;
@@ -82,16 +85,29 @@ interface State extends UI {
 const emptyProfile = (): Profile => ({
   xp: 0,
   achievements: {},
-  stats: { trees: 0, explorations: 0, customQuestions: 0, understood: 0, mastered: 0, notes: 0, edits: 0, maxDepth: 0, maxNodes: 0 },
+  stats: { trees: 0, explorations: 0, customQuestions: 0, understood: 0, mastered: 0, notes: 0, edits: 0, maxDepth: 0, maxNodes: 0, dives: 0, maxDive: 0 },
+  streak: 0,
+  lastActiveDay: "",
 });
 
+/** Fill fields added in newer versions into a saved profile. */
+const withDefaults = (p?: Partial<Profile>): Profile => {
+  const base = emptyProfile();
+  return { ...base, ...p, stats: { ...base.stats, ...(p?.stats ?? {}) } };
+};
+
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+
+/** Key used in `generating` while a deep dive is being written. */
+export const diveKey = (nodeId: string) => `${nodeId}:dive`;
+
 const STATE_COLOR: Record<NodeState, string> = {
-  unknown: "#64748b",
-  discovered: "#60a5fa",
-  exploring: "#22d3ee",
-  learning: "#a78bfa",
-  understood: "#34d399",
-  mastered: "#fbbf24",
+  unknown: "#a3a7c2",
+  discovered: "#3b82f6",
+  exploring: "#06b6d4",
+  learning: "#8b5cf6",
+  understood: "#10b981",
+  mastered: "#f59e0b",
 };
 export const stateColor = (s: NodeState) => STATE_COLOR[s];
 
@@ -124,18 +140,33 @@ export const useStore = create<State>()(
   persist(
     (set, get) => {
       /** Grant XP with a toast, then check for level-ups and new achievements. */
-      const award = (xp: number, title: string, icon = "⚡") => {
+      const award = (xp: number, title: string, icon = "⚡", quiet = false) => {
         if (xp <= 0) return;
+        touchStreak();
         const before = levelFromXp(get().profile.xp);
         set((s) => ({ profile: { ...s.profile, xp: s.profile.xp + xp } }));
-        get().pushToast({ kind: "xp", title, xp, icon });
-        sfx.xp();
+        if (!quiet) {
+          get().pushToast({ kind: "xp", title, xp, icon });
+          sfx.xp();
+        }
         const after = levelFromXp(get().profile.xp);
         if (after > before) {
           set({ levelUp: after });
           sfx.levelUp();
         }
         checkAchievements();
+      };
+
+      /** Daily streak: consecutive calendar days with at least one rewarded action. */
+      const touchStreak = () => {
+        const today = dayKey();
+        const { profile } = get();
+        if (profile.lastActiveDay === today) return;
+        const y = new Date();
+        y.setDate(y.getDate() - 1);
+        const streak = profile.lastActiveDay === dayKey(y) ? profile.streak + 1 : 1;
+        set((s) => ({ profile: { ...s.profile, streak, lastActiveDay: today } }));
+        if (streak > 1) setTimeout(() => get().pushToast({ kind: "info", title: `${streak}-day streak!`, sub: "Keep learning every day", icon: "🔥" }), 700);
       };
 
       const checkAchievements = () => {
@@ -147,7 +178,8 @@ export const useStore = create<State>()(
             get().pushToast({ kind: "achievement", title: a.title, sub: a.description, icon: a.icon, xp: a.xp });
             sfx.achievement();
           }, 450);
-          if (a.xp) award(a.xp, `Achievement: ${a.title}`, a.icon);
+          // The achievement toast already shows the bonus, so grant it quietly.
+          if (a.xp) award(a.xp, a.title, a.icon, true);
         }
       };
 
@@ -197,6 +229,7 @@ export const useStore = create<State>()(
         selectedId: null,
         exploreId: null,
         masteryId: null,
+        diveId: null,
         modal: null,
         planting: null,
         generating: {},
@@ -205,11 +238,11 @@ export const useStore = create<State>()(
         bursts: [],
         focus: null,
 
-        goHome: () => set({ screen: "home", treeId: null, selectedId: null, exploreId: null, masteryId: null }),
+        goHome: () => set({ screen: "home", treeId: null, selectedId: null, exploreId: null, masteryId: null, diveId: null }),
         openTree: (id) => {
           const tree = get().trees[id];
           if (!tree) return;
-          set({ screen: "tree", treeId: id, selectedId: null, exploreId: null, masteryId: null, focus: null });
+          set({ screen: "tree", treeId: id, selectedId: null, exploreId: null, masteryId: null, diveId: null, focus: null });
         },
         select: (nodeId) => {
           set({ selectedId: nodeId });
@@ -223,6 +256,13 @@ export const useStore = create<State>()(
           if (nodeId) sfx.open();
         },
         openMastery: (nodeId) => set({ masteryId: nodeId }),
+        openDive: (nodeId) => {
+          set({ diveId: nodeId });
+          if (nodeId) {
+            sfx.open();
+            promote(nodeId, "discovered");
+          }
+        },
         setModal: (modal) => set({ modal }),
         focusNode: (nodeId, zoom) => set({ focus: { nodeId, nonce: Math.random(), zoom } }),
 
@@ -246,7 +286,7 @@ export const useStore = create<State>()(
             };
             set((s) => ({ trees: { ...s.trees, [tree.id]: tree }, planting: null }));
             get().openTree(tree.id);
-            set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId: root.id, color: "#22d3ee" }] }));
+            set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId: root.id, color: "#06b6d4" }] }));
             sfx.grow();
             bump((st) => ({ trees: st.trees + 1 }));
             recordTreeStats(tree);
@@ -297,7 +337,7 @@ export const useStore = create<State>()(
             };
             writeTree(next);
             set((s) => ({
-              bursts: [...s.bursts, { id: uid("b"), nodeId, color: angle === "custom" ? "#f472b6" : "#22d3ee" }],
+              bursts: [...s.bursts, { id: uid("b"), nodeId, color: angle === "custom" ? "#ff4d94" : "#7c5cff" }],
               selectedId: q.id,
             }));
             sfx.grow();
@@ -324,6 +364,49 @@ export const useStore = create<State>()(
           }
         },
 
+        deepDive: async (nodeId, level, focus) => {
+          const tree = currentTree();
+          const node = tree?.nodes[nodeId];
+          const key = diveKey(nodeId);
+          if (!tree || !node || get().generating[key]) return false;
+          const { settings } = get();
+          set((s) => ({ generating: { ...s.generating, [key]: true } }));
+          sfx.scan();
+          try {
+            const previous = (node.dives ?? []).filter((d) => d.level < level).map((d) => ({ level: d.level, title: d.title, summary: d.summary }));
+            const draft = await getEngine(settings.apiKey, settings.model).deepDive({
+              path: pathTo(tree, nodeId).map((n) => n.title),
+              node: { title: node.title, summary: node.summary, details: node.details },
+              level,
+              previous,
+              focus: focus?.trim() || undefined,
+            });
+            const dive: DeepDive = { ...draft, level, focus: focus?.trim() || undefined, createdAt: Date.now() };
+            const firstAtLevel = !(node.dives ?? []).some((d) => d.level === level);
+            patchNode(nodeId, (n) => ({
+              ...n,
+              dives: [...(n.dives ?? []).filter((d) => d.level !== level), dive].sort((a, b) => a.level - b.level),
+            }));
+            sfx.grow();
+            promote(nodeId, "learning");
+            if (firstAtLevel) {
+              bump((st) => ({ dives: st.dives + 1, maxDive: Math.max(st.maxDive, level) }));
+              award(XP.dive * level, `Dove to depth ${level}: ${node.title}`, "🔬");
+            }
+            return true;
+          } catch (err) {
+            sfx.error();
+            get().pushToast({ kind: "error", title: "Deep dive failed", sub: err instanceof Error ? err.message : String(err), icon: "⚠️" });
+            return false;
+          } finally {
+            set((s) => {
+              const g = { ...s.generating };
+              delete g[key];
+              return { generating: g };
+            });
+          }
+        },
+
         setNodeState: (nodeId, state) => {
           const node = currentTree()?.nodes[nodeId];
           if (!node || node.state === state) return;
@@ -337,7 +420,7 @@ export const useStore = create<State>()(
             if (idx >= NODE_STATES.indexOf("understood") && peak < NODE_STATES.indexOf("understood")) bump((st) => ({ understood: st.understood + 1 }));
             if (state === "mastered") {
               bump((st) => ({ mastered: st.mastered + 1 }));
-              set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#fbbf24" }] }));
+              set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#f59e0b" }] }));
             }
             const verb: Partial<Record<NodeState, string>> = { discovered: "Discovered", learning: "Started learning", understood: "Understood", mastered: "Mastered", exploring: "Exploring" };
             award(total, `${verb[state] ?? "Progress"}: ${node.title}`, state === "mastered" ? "👑" : state === "understood" ? "💡" : "✨");
@@ -365,12 +448,12 @@ export const useStore = create<State>()(
           }
         },
 
-        addChild: (nodeId, title) => {
+        addChild: (nodeId, title, summary, select = true) => {
           const tree = currentTree();
           const parent = tree?.nodes[nodeId];
           if (!tree || !parent || !title.trim()) return;
           const child = makeNode(
-            { title: title.trim(), summary: "Your own concept. Describe it in your words.", details: "", icon: "🌟", difficulty: parent.difficulty },
+            { title: title.trim(), summary: summary?.trim() || "Your own concept. Describe it in your words.", details: "", icon: "🌟", difficulty: parent.difficulty },
             nodeId,
             "concept",
             "discovered",
@@ -380,8 +463,8 @@ export const useStore = create<State>()(
             ...tree,
             nodes: { ...tree.nodes, [nodeId]: { ...parent, collapsed: false, children: [...parent.children, child.id] }, [child.id]: child },
           });
-          set((s) => ({ selectedId: child.id, bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#f472b6" }] }));
-          setTimeout(() => get().focusNode(child.id), 120);
+          set((s) => ({ ...(select ? { selectedId: child.id } : {}), bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#ff4d94" }] }));
+          if (select) setTimeout(() => get().focusNode(child.id), 120);
           sfx.grow();
           bump((st) => ({ edits: st.edits + 1 }));
           recordTreeStats(get().trees[tree.id]);
@@ -419,7 +502,7 @@ export const useStore = create<State>()(
           if (!data || typeof data !== "object" || !data.trees) throw new Error("This file isn't a Knowledge Tree export.");
           set((s) => ({
             trees: { ...s.trees, ...data.trees },
-            profile: data.profile ? { ...emptyProfile(), ...data.profile, stats: { ...emptyProfile().stats, ...data.profile.stats } } : s.profile,
+            profile: data.profile ? withDefaults(data.profile) : s.profile,
           }));
         },
 
@@ -439,6 +522,10 @@ export const useStore = create<State>()(
       name: "knowledge-tree-v1",
       version: 1,
       partialize: (s) => ({ trees: s.trees, profile: s.profile, settings: s.settings }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<State>;
+        return { ...current, ...p, profile: withDefaults(p.profile), settings: { ...current.settings, ...(p.settings ?? {}) } };
+      },
     },
   ),
 );

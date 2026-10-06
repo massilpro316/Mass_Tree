@@ -7,7 +7,6 @@ import { Burst } from "./Burst";
 import { Edges } from "./Edges";
 import { Minimap } from "./Minimap";
 import { NodeView } from "./NodeView";
-import { parallax } from "./Starfield";
 
 const MIN_K = 0.2;
 const MAX_K = 2.2;
@@ -28,6 +27,7 @@ export function TreeCanvas() {
   const focus = useStore((s) => s.focus);
   const select = useStore((s) => s.select);
   const openExplore = useStore((s) => s.openExplore);
+  const openDive = useStore((s) => s.openDive);
   const clearBurst = useStore((s) => s.clearBurst);
 
   const viewport = useRef<HTMLDivElement>(null);
@@ -54,10 +54,8 @@ export function TreeCanvas() {
     return set;
   }, [selectedId, tree]);
 
-  // Keep a cheap React copy of the camera for the minimap + starfield parallax.
+  // Keep a cheap React copy of the camera for the minimap.
   const syncCam = useCallback(() => {
-    parallax.x = cx.get();
-    parallax.y = cy.get();
     setCam({ x: cx.get(), y: cy.get(), k: k.get() });
   }, [cx, cy, k]);
   const rafRef = useRef(0);
@@ -137,7 +135,7 @@ export function TreeCanvas() {
   const moved = useRef(false);
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest(".node-body, .node-plus, .canvas-controls, .minimap")) return;
+    if ((e.target as HTMLElement).closest(".node-body, .node-actions, .canvas-controls, .minimap")) return;
     viewport.current?.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     moved.current = false;
@@ -218,7 +216,8 @@ export function TreeCanvas() {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (t.closest("input, textarea, select, [contenteditable]")) return;
-      if (useStore.getState().exploreId || useStore.getState().masteryId || useStore.getState().modal) return;
+      const st = useStore.getState();
+      if (st.exploreId || st.masteryId || st.diveId || st.modal) return;
       if (e.key === "f" || e.key === "F") fit();
       else if (e.key === "=" || e.key === "+") zoomBy(1.25);
       else if (e.key === "-") zoomBy(0.8);
@@ -276,6 +275,7 @@ export function TreeCanvas() {
             hiddenCount={n.collapsed ? descendants(tree, n.id).length : 0}
             onSelect={select}
             onPlus={openExplore}
+            onDive={openDive}
           />
         ))}
         {bursts.map((b) =>

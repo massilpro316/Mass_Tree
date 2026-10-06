@@ -1,6 +1,6 @@
-import type { ConceptDraft, Difficulty, ExploreAngle, ExploreContext, ExploreDraft, RootDraft } from "../types";
-import { DEMO_BRANCHES, DEMO_CONCEPTS, DEMO_ROOT } from "./demoData";
-import { ANGLES } from "./prompts";
+import type { ConceptDraft, DeepDiveDraft, Difficulty, DiveContext, ExploreAngle, ExploreContext, ExploreDraft, RootDraft } from "../types";
+import { DEMO_BRANCHES, DEMO_CONCEPTS, DEMO_DIVES, DEMO_ROOT } from "./demoData";
+import { ANGLES, DIVE_LEVELS } from "./prompts";
 
 /**
  * Offline engine used when no API key is configured. It has real content for the
@@ -97,6 +97,37 @@ export class MockEngine {
       summary: `${label} — answered in three parts below.`,
       details: PLACEHOLDER(topic, `"${ctx.question}"`),
       concepts,
+    };
+  }
+
+  async deepDive(ctx: DiveContext): Promise<DeepDiveDraft> {
+    await wait(1300 + Math.random() * 700);
+    const demo = DEMO_DIVES[`${key(ctx.node.title)}|${ctx.level}`];
+    if (demo && !ctx.focus) return demo;
+    const lvl = DIVE_LEVELS[ctx.level - 1];
+    const t = ctx.node.title;
+    const topic = ctx.path[0] ?? t;
+    const note = "*Demo mode: placeholder dive.* Add a Claude API key in **Settings** for a real under-the-hood explanation.";
+    return {
+      title: `${t}: ${lvl.name.toLowerCase()} layer`,
+      summary: `At ${lvl.depth}, this layer would show ${lvl.goal.split(":")[0]} for ${t}.`,
+      steps: [
+        { label: "Trigger", detail: `Something in ${topic} calls on ${t}.` },
+        { label: "Inputs gathered", detail: `${t} collects the data and state it needs.` },
+        { label: "Core work", detail: `The central mechanism of ${t} runs.` },
+        { label: "Side effects", detail: "Results are stored, emitted or returned." },
+        { label: "Cleanup", detail: "Resources are released and the system is ready again." },
+      ],
+      sections: [
+        { heading: `What happens at ${lvl.depth}`, body: `${note}\n\nThis section would explain ${lvl.goal} for **${t}**${ctx.focus ? `, focused on *${ctx.focus}*` : ""}.` },
+        { heading: "Make it yours", body: "Write what you discover into your notes, and add the key terms below to your tree as new concepts to explore." },
+      ],
+      code: { language: "", snippet: "", caption: "" },
+      pitfalls: ["Placeholder pitfall: assumptions that hold at the surface may break at this depth."],
+      terms: [
+        { term: `${t} Internals`, meaning: `The hidden machinery behind ${t}.` },
+        { term: `${t} Lifecycle`, meaning: `The stages ${t} goes through from start to finish.` },
+      ],
     };
   }
 }

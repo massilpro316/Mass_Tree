@@ -1,16 +1,31 @@
 import { motion } from "framer-motion";
-import { Check, Crown, Plus } from "lucide-react";
+import { Crown, Microscope, Plus, Star } from "lucide-react";
 import { memo } from "react";
 import type { Positioned } from "../lib/layout";
 import { sfx } from "../lib/sound";
 import { stateColor } from "../store/useStore";
-import type { KNode } from "../types";
+import type { KNode, NodeState } from "../types";
 
-export function nodeRadius(n: KNode) {
-  if (n.kind === "root") return 58;
-  if (n.kind === "question") return 30;
-  return 32;
+/** Distance from a node's centre to where incoming edges attach (its top). */
+export function nodeTop(n: KNode) {
+  if (n.kind === "root") return 64;
+  if (n.kind === "question") return 34;
+  return 42;
 }
+
+/** Distance from a node's centre to where outgoing edges leave (below its label). */
+export function nodeBottom(n: KNode) {
+  if (n.kind === "root") return 136;
+  if (n.kind === "question") return 34;
+  return 100;
+}
+
+export function nodeColor(n: KNode) {
+  if (n.kind === "question") return n.angle === "custom" ? "#ff4d94" : "#7c5cff";
+  return stateColor(n.state);
+}
+
+const STARS: Partial<Record<NodeState, number>> = { learning: 1, understood: 2, mastered: 3 };
 
 const MOVE = { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const };
 
@@ -25,21 +40,17 @@ interface Props {
   hiddenCount: number;
   onSelect(id: string): void;
   onPlus(id: string): void;
+  onDive(id: string): void;
 }
 
-export const NodeView = memo(function NodeView({ node, pos, origin, index, selected, onPath, generating, hiddenCount, onSelect, onPlus }: Props) {
+export const NodeView = memo(function NodeView({ node, pos, origin, index, selected, onPath, generating, hiddenCount, onSelect, onPlus, onDive }: Props) {
   const fresh = Date.now() - node.createdAt < 4000;
   const from = fresh && origin ? origin : pos;
-  const color = node.kind === "question" ? (node.angle === "custom" ? "#f472b6" : "#818cf8") : stateColor(node.state);
+  const color = nodeColor(node);
+  const stars = STARS[node.state] ?? 0;
+  const dives = node.dives?.length ?? 0;
 
-  const cls = [
-    "node",
-    `node--${node.kind}`,
-    `state--${node.state}`,
-    selected && "is-selected",
-    onPath && "on-path",
-    generating && "is-generating",
-  ]
+  const cls = ["node", `node--${node.kind}`, `state--${node.state}`, selected && "is-selected", onPath && "on-path", generating && "is-generating"]
     .filter(Boolean)
     .join(" ");
 
@@ -52,8 +63,8 @@ export const NodeView = memo(function NodeView({ node, pos, origin, index, selec
       transition={{
         x: MOVE,
         y: MOVE,
-        scale: { type: "spring", stiffness: 260, damping: 16, delay: fresh ? 0.15 + index * 0.09 : 0 },
-        opacity: { duration: 0.3, delay: fresh ? 0.15 + index * 0.09 : 0 },
+        scale: { type: "spring", stiffness: 320, damping: 14, delay: fresh ? 0.15 + index * 0.09 : 0 },
+        opacity: { duration: 0.25, delay: fresh ? 0.15 + index * 0.09 : 0 },
       }}
     >
       <div className="node-anchor">
@@ -65,40 +76,29 @@ export const NodeView = memo(function NodeView({ node, pos, origin, index, selec
             onSelect(node.id);
           }}
           onPointerEnter={() => sfx.hover()}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.94 }}
+          whileHover={{ y: -4, rotate: node.kind === "question" ? 0 : -2 }}
+          whileTap={{ y: 3, scale: 0.97 }}
           aria-label={node.title}
         >
           {node.kind === "question" ? (
             <div className="q-card">
+              <span className="q-badge">{node.angle === "custom" ? "?" : "Q"}</span>
               <span className="q-icon">{node.icon}</span>
               <span className="q-text">{node.title}</span>
             </div>
           ) : (
-            <div className="orb">
-              <span className="orb-halo" />
-              <span className="orb-ring" />
-              {node.kind === "root" && (
-                <>
-                  <span className="orbit orbit-1">
-                    <i />
-                  </span>
-                  <span className="orbit orbit-2">
-                    <i />
-                  </span>
-                </>
-              )}
-              <span className="orb-core">
-                <span className="orb-icon">{node.icon}</span>
-              </span>
-              {node.state === "understood" && (
-                <span className="orb-badge badge-understood">
-                  <Check size={11} strokeWidth={3} />
+            <div className="tile">
+              <span className="tile-cap" />
+              <span className="tile-icon">{node.icon}</span>
+              <span className="tile-shine" />
+              {node.state === "mastered" && (
+                <span className="tile-crown">
+                  <Crown size={node.kind === "root" ? 22 : 16} strokeWidth={2.5} />
                 </span>
               )}
-              {node.state === "mastered" && (
-                <span className="orb-badge badge-mastered">
-                  <Crown size={11} strokeWidth={2.5} />
+              {dives > 0 && (
+                <span className="tile-dive" title={`Deep Dive depth ${dives}`}>
+                  {"▾".repeat(dives)}
                 </span>
               )}
             </div>
@@ -106,20 +106,43 @@ export const NodeView = memo(function NodeView({ node, pos, origin, index, selec
           {generating && <span className="scan-ring" />}
         </motion.button>
 
-        {node.kind !== "question" && <div className="node-label">{node.title}</div>}
+        {node.kind !== "question" && (
+          <div className="node-foot">
+            <div className="stars">
+              {[1, 2, 3].map((i) => (
+                <Star key={i} size={node.kind === "root" ? 15 : 12} className={i <= stars ? "on" : ""} strokeWidth={2.5} />
+              ))}
+            </div>
+            <div className="node-label">{node.title}</div>
+          </div>
+        )}
 
-        <motion.button
-          className="node-plus"
-          title="Explore"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPlus(node.id);
-          }}
-          whileHover={{ scale: 1.2, rotate: 90 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <Plus size={14} strokeWidth={3} />
-        </motion.button>
+        <div className="node-actions">
+          <motion.button
+            className="act act-dive"
+            title="Deep Dive: under the hood"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDive(node.id);
+            }}
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Microscope size={14} strokeWidth={2.6} />
+          </motion.button>
+          <motion.button
+            className="act act-plus"
+            title="Explore"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlus(node.id);
+            }}
+            whileHover={{ scale: 1.15, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Plus size={15} strokeWidth={3.2} />
+          </motion.button>
+        </div>
 
         {hiddenCount > 0 && <span className="collapsed-count">+{hiddenCount}</span>}
 

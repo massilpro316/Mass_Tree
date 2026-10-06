@@ -45,6 +45,43 @@ export interface KNode {
   /** Highest state index ever reached — XP is only granted for new peaks. */
   peak?: number;
   noted?: boolean;
+  /** "Deep Dive" layers, one per depth level, explaining what happens under the hood. */
+  dives?: DeepDive[];
+}
+
+export interface DiveStep {
+  label: string;
+  detail: string;
+}
+
+export interface DiveSection {
+  heading: string;
+  body: string;
+}
+
+export interface DeepDiveDraft {
+  title: string;
+  summary: string;
+  steps: DiveStep[];
+  sections: DiveSection[];
+  code: { language: string; snippet: string; caption: string };
+  pitfalls: string[];
+  terms: { term: string; meaning: string }[];
+}
+
+export interface DeepDive extends DeepDiveDraft {
+  level: number;
+  focus?: string;
+  createdAt: number;
+}
+
+export interface DiveContext {
+  path: string[];
+  node: { title: string; summary: string; details: string };
+  level: number;
+  /** Titles and summaries of shallower dives, so each level goes deeper instead of repeating. */
+  previous: { level: number; title: string; summary: string }[];
+  focus?: string;
 }
 
 export interface Tree {
@@ -67,12 +104,17 @@ export interface ProfileStats {
   edits: number;
   maxDepth: number;
   maxNodes: number;
+  dives: number;
+  maxDive: number;
 }
 
 export interface Profile {
   xp: number;
   achievements: Record<string, number>;
   stats: ProfileStats;
+  /** Consecutive days with at least one learning action. */
+  streak: number;
+  lastActiveDay: string;
 }
 
 /** Content returned by the AI layer for one concept. */

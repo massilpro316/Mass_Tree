@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, Settings, Trophy, Volume2, VolumeX } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ACHIEVEMENTS } from "../lib/achievements";
 import { levelProgress, levelTitle } from "../lib/levels";
 import { isMuted, setMuted } from "../lib/sound";
@@ -8,17 +8,20 @@ import { useStore, useTree } from "../store/useStore";
 import { NODE_STATES } from "../types";
 
 export function LevelBadge({ level, size = 44 }: { level: number; size?: number }) {
+  // Unique per instance: a gradient defined inside a hidden badge would break the others.
+  const grad = useId();
   return (
     <div className="level-badge" style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" width={size} height={size}>
         <defs>
-          <linearGradient id="lb" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#22d3ee" />
-            <stop offset="0.5" stopColor="#818cf8" />
-            <stop offset="1" stopColor="#f472b6" />
+          <linearGradient id={grad} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#9b7bff" />
+            <stop offset="1" stopColor="#6a3df5" />
           </linearGradient>
         </defs>
-        <polygon points="50,3 93,27 93,73 50,97 7,73 7,27" fill="rgba(8,10,30,0.9)" stroke="url(#lb)" strokeWidth="5" />
+        <polygon points="50,10 92,32 92,74 50,96 8,74 8,32" fill="#1c1940" />
+        <polygon points="50,4 92,26 92,68 50,90 8,68 8,26" fill={`url(#${grad})`} stroke="#1c1940" strokeWidth="5" strokeLinejoin="round" />
+        <polygon points="50,14 82,31 50,40 18,31" fill="rgba(255,255,255,0.28)" />
       </svg>
       <span style={{ fontSize: size * 0.36 }}>{level}</span>
     </div>
@@ -54,6 +57,7 @@ export function HUD() {
   const goHome = useStore((s) => s.goHome);
   const setModal = useStore((s) => s.setModal);
   const unlocked = useStore((s) => Object.keys(s.profile.achievements).length);
+  const streak = useStore((s) => s.profile.streak);
   const demo = useStore((s) => !s.settings.apiKey);
   const [muted, setM] = useState(isMuted());
 
@@ -76,7 +80,7 @@ export function HUD() {
           <span className="brand-name">KNOWLEDGE TREE</span>
         </button>
         {screen === "tree" && tree && (
-          <motion.div className="hud-tree glass" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div className="hud-tree pill" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <span className="hud-tree-title">{tree.title}</span>
             <span className="hud-stat" title="Nodes">
               ◉ {nodes.length}
@@ -96,7 +100,10 @@ export function HUD() {
             <span className="pulse-dot" /> Demo mode
           </button>
         )}
-        <div className="glass hud-xp">
+        <div className="pill streak" title="Daily streak">
+          <span className="streak-fire">🔥</span> {streak}
+        </div>
+        <div className="pill hud-xp">
           <XPBar compact />
         </div>
         <button className="icon-btn trophy" onClick={() => setModal("achievements")} title="Achievements">

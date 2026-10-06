@@ -19,13 +19,16 @@ export function levelProgress(xp: number) {
 
 const TITLES: [number, string][] = [
   [1, "Spark"],
+  [2, "Rookie"],
   [3, "Seeker"],
+  [4, "Explorer"],
   [5, "Pathfinder"],
-  [8, "Navigator"],
-  [12, "Cartographer"],
-  [16, "Architect"],
-  [21, "Sage"],
-  [28, "Oracle"],
+  [7, "Navigator"],
+  [9, "Cartographer"],
+  [12, "Architect"],
+  [16, "Sage"],
+  [21, "Oracle"],
+  [28, "Legend"],
   [36, "Singularity"],
 ];
 
@@ -47,4 +50,5 @@ export const XP = {
   note: 5,
   edit: 5,
   addNode: 8,
+  dive: 20,
 } as const;

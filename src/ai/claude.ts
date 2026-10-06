@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod/v4";
-import type { ExploreContext, ExploreDraft, QuizQuestion, RootDraft } from "../types";
-import { explorePrompt, quizPrompt, rootPrompt, SYSTEM_PROMPT } from "./prompts";
+import type { DeepDiveDraft, DiveContext, ExploreContext, ExploreDraft, QuizQuestion, RootDraft } from "../types";
+import { divePrompt, explorePrompt, quizPrompt, rootPrompt, SYSTEM_PROMPT } from "./prompts";
 
 export const MODELS = [
   { id: "claude-opus-5-5", label: "Claude Opus 5.5", note: "Deepest explanations" },
@@ -50,6 +50,16 @@ const QuizSchema = z.object({
   ),
 });
 
+const DiveSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  steps: z.array(z.object({ label: z.string(), detail: z.string() })),
+  sections: z.array(z.object({ heading: z.string(), body: z.string() })),
+  code: z.object({ language: z.string(), snippet: z.string(), caption: z.string() }),
+  pitfalls: z.array(z.string()),
+  terms: z.array(z.object({ term: z.string(), meaning: z.string() })),
+});
+
 /** Server-side refusal fallbacks are only offered for these models. */
 const FALLBACK_MODELS = new Set<string>(["claude-opus-5-5", "claude-sonnet-5-5"]);
 
@@ -66,7 +76,12 @@ export class ClaudeEngine {
     this.client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true, maxRetries: 2 });
   }
 
-  private async run<S extends z.ZodType>(schema: S, prompt: string, maxTokens = 6000): Promise<z.infer<S>> {
+  private async run<S extends z.ZodType>(
+    schema: S,
+    prompt: string,
+    maxTokens = 6000,
+    effort: "low" | "medium" = "low",
+  ): Promise<z.infer<S>> {
     const base = {
       model: this.model,
       max_tokens: maxTokens,
@@ -75,7 +90,7 @@ export class ClaudeEngine {
       output_config: {
         format: betaZodOutputFormat(schema),
         // Effort isn't supported on Haiku 4.5; keep game interactions snappy elsewhere.
-        ...(this.model.startsWith("claude-haiku") ? {} : { effort: "low" as const }),
+        ...(this.model.startsWith("claude-haiku") ? {} : { effort }),
       },
     };
 
@@ -117,6 +132,12 @@ export class ClaudeEngine {
   async explore(ctx: ExploreContext): Promise<ExploreDraft> {
     const r = await this.run(ExploreSchema, explorePrompt(ctx));
     return { ...r, concepts: r.concepts.slice(0, 5) };
+  }
+
+  async deepDive(ctx: DiveContext): Promise<DeepDiveDraft> {
+    // Deep dives are the long-form explanations, so give them more room and thought.
+    const r = await this.run(DiveSchema, divePrompt(ctx), 12000, "medium");
+    return { ...r, steps: r.steps.slice(0, 8), sections: r.sections.slice(0, 4), pitfalls: r.pitfalls.slice(0, 5), terms: r.terms.slice(0, 6) };
   }
 
   async quiz(path: string[], title: string, summary: string, details: string): Promise<QuizQuestion[]> {

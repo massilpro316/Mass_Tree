@@ -1,10 +1,11 @@
-import type { ExploreContext, ExploreDraft, QuizQuestion, RootDraft } from "../types";
+import type { DeepDiveDraft, DiveContext, ExploreContext, ExploreDraft, QuizQuestion, RootDraft } from "../types";
 import { ClaudeEngine } from "./claude";
 import { MockEngine } from "./mock";
 
 export interface Engine {
   generateRoot(question: string): Promise<RootDraft>;
   explore(ctx: ExploreContext): Promise<ExploreDraft>;
+  deepDive(ctx: DiveContext): Promise<DeepDiveDraft>;
   /** Only available with a real model; the demo uses a teach-back challenge instead. */
   quiz?(path: string[], title: string, summary: string, details: string): Promise<QuizQuestion[]>;
 }
