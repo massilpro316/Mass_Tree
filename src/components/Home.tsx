@@ -111,12 +111,12 @@ export function Home() {
 }
 
 const FLOATERS = [
-  { e: "🧠", x: 6, y: 12, c: "#8b5cf6", r: -8 },
-  { e: "⚙️", x: 88, y: 10, c: "#06b6d4", r: 6 },
-  { e: "🚀", x: 1, y: 44, c: "#ff4d94", r: 10 },
-  { e: "💡", x: 93, y: 42, c: "#f59e0b", r: -6 },
-  { e: "🧬", x: 5, y: 74, c: "#10b981", r: 4 },
-  { e: "🔬", x: 90, y: 72, c: "#3b82f6", r: -10 },
+  { e: "🧠", x: 6, y: 12, c: "#6366f1", r: -4 },
+  { e: "⚙️", x: 88, y: 10, c: "#0ea5e9", r: 3 },
+  { e: "🚀", x: 1, y: 44, c: "#2563eb", r: 4 },
+  { e: "💡", x: 93, y: 42, c: "#d97706", r: -3 },
+  { e: "🧬", x: 5, y: 74, c: "#059669", r: 2 },
+  { e: "🔬", x: 90, y: 72, c: "#0d9488", r: -4 },
 ];
 
 function HeroFloaters() {
@@ -211,12 +211,12 @@ function TreeCard({ tree, index }: { tree: Tree; index: number }) {
           const n = tree.nodes[id];
           if (!n.parentId || !preview.pos[n.parentId]) return null;
           const q = preview.pos[n.parentId];
-          return <line key={`l${id}`} x1={q.x * preview.s + preview.ox} y1={q.y * preview.s + preview.oy} x2={p.x * preview.s + preview.ox} y2={p.y * preview.s + preview.oy} stroke="rgba(28,25,64,0.25)" strokeWidth={1.5} />;
+          return <line key={`l${id}`} x1={q.x * preview.s + preview.ox} y1={q.y * preview.s + preview.oy} x2={p.x * preview.s + preview.ox} y2={p.y * preview.s + preview.oy} stroke="rgba(15,23,42,0.18)" strokeWidth={1.25} />;
         })}
         {Object.entries(preview.pos).map(([id, p]) => {
           const n = tree.nodes[id];
-          const c = n.kind === "question" ? "#7c5cff" : stateColor(n.state);
-          return <circle key={id} cx={p.x * preview.s + preview.ox} cy={p.y * preview.s + preview.oy} r={n.kind === "root" ? 6 : 4} fill={c} stroke="#1c1940" strokeWidth={1.5} />;
+          const c = n.kind === "question" ? "#4f46e5" : stateColor(n.state);
+          return <circle key={id} cx={p.x * preview.s + preview.ox} cy={p.y * preview.s + preview.oy} r={n.kind === "root" ? 6 : 4} fill={c} stroke="#fff" strokeWidth={1.5} />;
         })}
       </svg>
       <div className="tree-card-body">
@@ -257,7 +257,7 @@ function Ring({ ratio }: { ratio: number }) {
   const c = 2 * Math.PI * r;
   return (
     <svg width="28" height="28" className="ring">
-      <circle cx="14" cy="14" r={r} stroke="rgba(28,25,64,0.12)" strokeWidth="3.5" fill="none" />
+      <circle cx="14" cy="14" r={r} stroke="rgba(15,23,42,0.1)" strokeWidth="3.5" fill="none" />
       <motion.circle
         cx="14"
         cy="14"
@@ -274,11 +274,11 @@ function Ring({ ratio }: { ratio: number }) {
       />
       <defs>
         <linearGradient id="ringGrad">
-          <stop offset="0" stopColor="#06b6d4" />
-          <stop offset="1" stopColor="#10b981" />
+          <stop offset="0" stopColor="#2563eb" />
+          <stop offset="1" stopColor="#0ea5e9" />
         </linearGradient>
       </defs>
-      <text x="14" y="17.5" textAnchor="middle" fontSize="8" fontWeight="700" fill="#4a4770">
+      <text x="14" y="17.5" textAnchor="middle" fontSize="8" fontWeight="700" fill="#475569">
         {Math.round(ratio * 100)}
       </text>
     </svg>

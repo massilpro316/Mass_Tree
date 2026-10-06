@@ -15,13 +15,13 @@ export function LevelBadge({ level, size = 44 }: { level: number; size?: number 
       <svg viewBox="0 0 100 100" width={size} height={size}>
         <defs>
           <linearGradient id={grad} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#9b7bff" />
-            <stop offset="1" stopColor="#6a3df5" />
+            <stop offset="0" stopColor="#2563eb" />
+            <stop offset="1" stopColor="#1e3a8a" />
           </linearGradient>
         </defs>
-        <polygon points="50,10 92,32 92,74 50,96 8,74 8,32" fill="#1c1940" />
-        <polygon points="50,4 92,26 92,68 50,90 8,68 8,26" fill={`url(#${grad})`} stroke="#1c1940" strokeWidth="5" strokeLinejoin="round" />
-        <polygon points="50,14 82,31 50,40 18,31" fill="rgba(255,255,255,0.28)" />
+        <polygon points="50,9 92,31 92,73 50,95 8,73 8,31" fill="#0b1b3f" />
+        <polygon points="50,4 92,26 92,68 50,90 8,68 8,26" fill={`url(#${grad})`} stroke="#0b1b3f" strokeWidth="3" strokeLinejoin="round" />
+        <polygon points="50,14 82,31 50,40 18,31" fill="rgba(255,255,255,0.16)" />
       </svg>
       <span style={{ fontSize: size * 0.36 }}>{level}</span>
     </div>

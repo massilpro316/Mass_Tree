@@ -49,9 +49,9 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
               initial={fresh ? { pathLength: 0, opacity: 0 } : false}
               animate={{ d, pathLength: 1, opacity: 1 }}
               transition={{ d: MOVE, pathLength: { duration: 0.9, ease: "easeOut" }, opacity: { duration: 0.3 } }}
-              stroke={hot ? color : "#1c1940"}
-              strokeOpacity={hot ? 0.22 : 0.07}
-              strokeWidth={hot ? 16 : 12}
+              stroke={hot ? color : "#0f172a"}
+              strokeOpacity={hot ? 0.16 : 0.05}
+              strokeWidth={hot ? 12 : 9}
               fill="none"
               strokeLinecap="round"
             />
@@ -61,9 +61,9 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
               initial={fresh ? { pathLength: 0 } : false}
               animate={{ d, pathLength: 1 }}
               transition={{ d: MOVE, pathLength: { duration: 0.9, ease: "easeOut" } }}
-              stroke={active ? color : "#b4b7d2"}
+              stroke={active ? color : "#cbd5e1"}
               strokeOpacity={hot ? 1 : active ? 0.75 : 0.9}
-              strokeWidth={hot ? 3.5 : 2.5}
+              strokeWidth={hot ? 2.5 : 1.75}
               strokeDasharray={active ? undefined : "2 7"}
               fill="none"
               strokeLinecap="round"
@@ -81,7 +81,7 @@ export const Edges = memo(function Edges({ tree, pos, highlight }: Props) {
               />
             )}
             {(level >= 2 || hot || child.kind === "question") && (
-              <circle r={hot ? 5 : 4} fill="#fff" stroke={color} strokeWidth={2.5} className="edge-particle">
+              <circle r={hot ? 3.5 : 3} fill="#fff" stroke={color} strokeWidth={2} className="edge-particle">
                 <animateMotion dur={`${2.4 + (id.charCodeAt(id.length - 1) % 5) * 0.4}s`} repeatCount="indefinite" rotate="auto">
                   <mpath href={`#edge-${id}`} />
                 </animateMotion>

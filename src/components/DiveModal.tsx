@@ -8,7 +8,7 @@ import type { DeepDive } from "../types";
 import { Modal } from "./Modal";
 
 /** Background tint per depth: the water gets deeper as you dive. */
-const DEPTH_TINT = ["#e0f7ff", "#cfe6ff", "#d9d4ff", "#cdc5ff"];
+const DEPTH_TINT = ["#f0fdfa", "#e0f2fe", "#dbeafe", "#d6e2ff"];
 
 export function DiveModal() {
   const tree = useTree();

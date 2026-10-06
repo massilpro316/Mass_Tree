@@ -102,12 +102,12 @@ const dayKey = (d = new Date()) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.g
 export const diveKey = (nodeId: string) => `${nodeId}:dive`;
 
 const STATE_COLOR: Record<NodeState, string> = {
-  unknown: "#a3a7c2",
+  unknown: "#94a3b8",
   discovered: "#3b82f6",
-  exploring: "#06b6d4",
-  learning: "#8b5cf6",
-  understood: "#10b981",
-  mastered: "#f59e0b",
+  exploring: "#0ea5e9",
+  learning: "#6366f1",
+  understood: "#059669",
+  mastered: "#d97706",
 };
 export const stateColor = (s: NodeState) => STATE_COLOR[s];
 
@@ -286,7 +286,7 @@ export const useStore = create<State>()(
             };
             set((s) => ({ trees: { ...s.trees, [tree.id]: tree }, planting: null }));
             get().openTree(tree.id);
-            set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId: root.id, color: "#06b6d4" }] }));
+            set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId: root.id, color: "#2563eb" }] }));
             sfx.grow();
             bump((st) => ({ trees: st.trees + 1 }));
             recordTreeStats(tree);
@@ -337,7 +337,7 @@ export const useStore = create<State>()(
             };
             writeTree(next);
             set((s) => ({
-              bursts: [...s.bursts, { id: uid("b"), nodeId, color: angle === "custom" ? "#ff4d94" : "#7c5cff" }],
+              bursts: [...s.bursts, { id: uid("b"), nodeId, color: angle === "custom" ? "#0d9488" : "#2563eb" }],
               selectedId: q.id,
             }));
             sfx.grow();
@@ -420,7 +420,7 @@ export const useStore = create<State>()(
             if (idx >= NODE_STATES.indexOf("understood") && peak < NODE_STATES.indexOf("understood")) bump((st) => ({ understood: st.understood + 1 }));
             if (state === "mastered") {
               bump((st) => ({ mastered: st.mastered + 1 }));
-              set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#f59e0b" }] }));
+              set((s) => ({ bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#d97706" }] }));
             }
             const verb: Partial<Record<NodeState, string>> = { discovered: "Discovered", learning: "Started learning", understood: "Understood", mastered: "Mastered", exploring: "Exploring" };
             award(total, `${verb[state] ?? "Progress"}: ${node.title}`, state === "mastered" ? "👑" : state === "understood" ? "💡" : "✨");
@@ -463,7 +463,7 @@ export const useStore = create<State>()(
             ...tree,
             nodes: { ...tree.nodes, [nodeId]: { ...parent, collapsed: false, children: [...parent.children, child.id] }, [child.id]: child },
           });
-          set((s) => ({ ...(select ? { selectedId: child.id } : {}), bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#ff4d94" }] }));
+          set((s) => ({ ...(select ? { selectedId: child.id } : {}), bursts: [...s.bursts, { id: uid("b"), nodeId, color: "#0d9488" }] }));
           if (select) setTimeout(() => get().focusNode(child.id), 120);
           sfx.grow();
           bump((st) => ({ edits: st.edits + 1 }));

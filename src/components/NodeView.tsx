@@ -21,7 +21,7 @@ export function nodeBottom(n: KNode) {
 }
 
 export function nodeColor(n: KNode) {
-  if (n.kind === "question") return n.angle === "custom" ? "#ff4d94" : "#7c5cff";
+  if (n.kind === "question") return n.angle === "custom" ? "#0d9488" : "#4f46e5";
   return stateColor(n.state);
 }
 

@@ -17,7 +17,7 @@ AI generates the structure. You own the knowledge.
 
 ## Game layer
 
-- Light "grid gradient" world: drifting pastel gradients under a soft grid, chunky outlined game cards and 3D press buttons
+- Light "grid gradient" world: soft blue and teal gradients under a fine grid, clean cards and buttons with a subtle press-down feel
 - Concepts are game tiles with 0–3 stars (Learning ★, Understood ★★, Mastered ★★★ with a gold tile and crown)
 - XP for discovering, exploring, asking your own questions, deep diving, understanding and mastering
 - Levels with ranks (Spark → Rookie → Seeker → … → Singularity), a daily 🔥 streak and a level-up celebration
